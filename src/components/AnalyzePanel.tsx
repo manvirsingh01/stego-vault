@@ -6,22 +6,28 @@ import {
   extractBitPlane, 
   calculateHistogram, 
   rsAnalysis,
+  extractImageMetadata,
+  extractExifData,
   type RSAnalysisResult,
-  type HistogramData 
+  type HistogramData,
+  type ImageMetadata
 } from '@/lib';
 
 export function AnalyzePanel() {
   const [image, setImage] = useState<ImageData | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<'red' | 'green' | 'blue'>('red');
   const [selectedBit, setSelectedBit] = useState(0);
   const [bitPlanePreview, setBitPlanePreview] = useState<string | null>(null);
   const [histogram, setHistogram] = useState<HistogramData | null>(null);
   const [rsResult, setRsResult] = useState<RSAnalysisResult | null>(null);
+  const [metadata, setMetadata] = useState<ImageMetadata | null>(null);
   const histogramCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const handleImageLoad = useCallback((imageData: ImageData) => {
+  const handleImageLoad = useCallback(async (imageData: ImageData, file?: File) => {
     setImage(imageData);
+    setImageFile(file || null);
     
     const canvas = document.createElement('canvas');
     canvas.width = imageData.width;
@@ -32,6 +38,16 @@ export function AnalyzePanel() {
     
     setHistogram(calculateHistogram(imageData));
     setRsResult(rsAnalysis(imageData));
+    
+    // Extract metadata
+    if (file) {
+      const meta = extractImageMetadata(file, imageData);
+      const exif = await extractExifData(file);
+      if (exif) {
+        meta.exif = exif;
+      }
+      setMetadata(meta);
+    }
   }, []);
 
   useEffect(() => {
@@ -99,10 +115,12 @@ export function AnalyzePanel() {
 
   const handleClear = useCallback(() => {
     setImage(null);
+    setImageFile(null);
     setImagePreview(null);
     setBitPlanePreview(null);
     setHistogram(null);
     setRsResult(null);
+    setMetadata(null);
   }, []);
 
   return (
@@ -118,9 +136,116 @@ export function AnalyzePanel() {
 
       {image && (
         <>
+          {/* File Metadata */}
+          {metadata && (
+            <div className="space-y-4">
+              <h3 className="text-sm text-[#00FF41]">{"// FILE_METADATA"}</h3>
+              <div className="border-t border-[#00FF41] pt-4"></div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="border border-[#00aa2a] p-3 space-y-2 text-sm">
+                  <p className="text-[#00aa2a] text-xs mb-2">BASIC_INFO:</p>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">FILENAME:</span>
+                    <span className="text-[#00FF41] text-xs truncate max-w-40">{metadata.fileName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">FILE_SIZE:</span>
+                    <span className="text-[#00FF41]">{metadata.fileSize}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">FILE_TYPE:</span>
+                    <span className="text-[#00FF41]">{metadata.fileType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">DIMENSIONS:</span>
+                    <span className="text-[#00FF41]">{metadata.width} × {metadata.height} px</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">ASPECT_RATIO:</span>
+                    <span className="text-[#00FF41]">{metadata.aspectRatio}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">TOTAL_PIXELS:</span>
+                    <span className="text-[#00FF41]">{metadata.totalPixels}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">COLOR_DEPTH:</span>
+                    <span className="text-[#00FF41]">{metadata.colorDepth}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">LAST_MODIFIED:</span>
+                    <span className="text-[#00FF41] text-xs">{metadata.lastModified}</span>
+                  </div>
+                </div>
+
+                <div className="border border-[#00aa2a] p-3 space-y-2 text-sm">
+                  <p className="text-[#00aa2a] text-xs mb-2">EXIF_DATA:</p>
+                  {metadata.exif ? (
+                    <>
+                      {metadata.exif.make && (
+                        <div className="flex justify-between">
+                          <span className="text-[#00aa2a]">CAMERA_MAKE:</span>
+                          <span className="text-[#00FF41]">{metadata.exif.make}</span>
+                        </div>
+                      )}
+                      {metadata.exif.model && (
+                        <div className="flex justify-between">
+                          <span className="text-[#00aa2a]">CAMERA_MODEL:</span>
+                          <span className="text-[#00FF41]">{metadata.exif.model}</span>
+                        </div>
+                      )}
+                      {metadata.exif.dateTime && (
+                        <div className="flex justify-between">
+                          <span className="text-[#00aa2a]">DATE_TAKEN:</span>
+                          <span className="text-[#00FF41] text-xs">{metadata.exif.dateTime}</span>
+                        </div>
+                      )}
+                      {metadata.exif.exposureTime && (
+                        <div className="flex justify-between">
+                          <span className="text-[#00aa2a]">EXPOSURE:</span>
+                          <span className="text-[#00FF41]">{metadata.exif.exposureTime}s</span>
+                        </div>
+                      )}
+                      {metadata.exif.fNumber && (
+                        <div className="flex justify-between">
+                          <span className="text-[#00aa2a]">F_NUMBER:</span>
+                          <span className="text-[#00FF41]">f/{metadata.exif.fNumber}</span>
+                        </div>
+                      )}
+                      {metadata.exif.iso && (
+                        <div className="flex justify-between">
+                          <span className="text-[#00aa2a]">ISO:</span>
+                          <span className="text-[#00FF41]">{metadata.exif.iso}</span>
+                        </div>
+                      )}
+                      {metadata.exif.focalLength && (
+                        <div className="flex justify-between">
+                          <span className="text-[#00aa2a]">FOCAL_LENGTH:</span>
+                          <span className="text-[#00FF41]">{metadata.exif.focalLength}mm</span>
+                        </div>
+                      )}
+                      {metadata.exif.software && (
+                        <div className="flex justify-between">
+                          <span className="text-[#00aa2a]">SOFTWARE:</span>
+                          <span className="text-[#00FF41] text-xs truncate max-w-32">{metadata.exif.software}</span>
+                        </div>
+                      )}
+                      {!metadata.exif.make && !metadata.exif.model && !metadata.exif.dateTime && (
+                        <p className="text-[#00aa2a] text-xs italic">MINIMAL_EXIF_DATA_FOUND</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-[#00aa2a] text-xs italic">NO_EXIF_DATA_FOUND</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Bit Plane Visualization */}
           <div className="space-y-4">
-            <h3 className="text-sm text-[#00FF41]">// BIT_PLANE_VISUALIZATION</h3>
+            <h3 className="text-sm text-[#00FF41]">{"// BIT_PLANE_VISUALIZATION"}</h3>
             <div className="border-t border-[#00FF41] pt-4"></div>
             
             <div className="flex flex-wrap gap-4">
@@ -187,7 +312,7 @@ export function AnalyzePanel() {
 
           {/* Histogram */}
           <div className="space-y-4">
-            <h3 className="text-sm text-[#00FF41]">// PIXEL_HISTOGRAM</h3>
+            <h3 className="text-sm text-[#00FF41]">{"// PIXEL_HISTOGRAM"}</h3>
             <div className="border-t border-[#00FF41] pt-4"></div>
             <div className="max-w-2xl">
               <canvas 
@@ -202,7 +327,7 @@ export function AnalyzePanel() {
           {/* RS Analysis */}
           {rsResult && (
             <div className="space-y-4">
-              <h3 className="text-sm text-[#00FF41]">// RS_STEGANALYSIS</h3>
+              <h3 className="text-sm text-[#00FF41]">{"// RS_STEGANALYSIS"}</h3>
               <div className="border-t border-[#00FF41] pt-4"></div>
               
               <div className="grid md:grid-cols-2 gap-4">

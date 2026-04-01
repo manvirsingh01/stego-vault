@@ -3,12 +3,14 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { AudioDropzone } from './AudioDropzone';
 import { analyzeAudio, drawAudioWaveform, drawSpectrogram } from '@/lib/audio-analyze';
+import { extractAudioMetadata, type AudioMetadata } from '@/lib/metadata';
 import type { AudioAnalysisResult } from '@/lib/audio-analyze';
 
 export function AudioAnalyzePanel() {
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [result, setResult] = useState<AudioAnalysisResult | null>(null);
+  const [metadata, setMetadata] = useState<AudioMetadata | null>(null);
 
   const waveformRef = useRef<HTMLCanvasElement>(null);
   const spectrogramRef = useRef<HTMLCanvasElement>(null);
@@ -17,6 +19,7 @@ export function AudioAnalyzePanel() {
     setAudioBuffer(buffer);
     setAudioFile(file);
     setResult(analyzeAudio(buffer));
+    setMetadata(extractAudioMetadata(file, buffer));
   }, []);
 
   useEffect(() => {
@@ -29,6 +32,7 @@ export function AudioAnalyzePanel() {
     setAudioBuffer(null);
     setAudioFile(null);
     setResult(null);
+    setMetadata(null);
   }, []);
 
   const formatBytes = (n: number) => {
@@ -53,6 +57,62 @@ export function AudioAnalyzePanel() {
 
       {audioBuffer && result && (
         <>
+          {/* File Metadata */}
+          {metadata && (
+            <div className="space-y-3">
+              <h3 className="text-sm text-[#00FF41]">{"// FILE_METADATA"}</h3>
+              <div className="border-t border-[#00FF41] pt-3"></div>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="border border-[#00aa2a] p-3 space-y-2 text-sm">
+                  <p className="text-[#00aa2a] text-xs mb-1">BASIC_INFO:</p>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">FILENAME:</span>
+                    <span className="text-[#00FF41] text-xs truncate max-w-40">{metadata.fileName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">FILE_SIZE:</span>
+                    <span className="text-[#00FF41]">{metadata.fileSize}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">FILE_TYPE:</span>
+                    <span className="text-[#00FF41]">{metadata.fileType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">LAST_MODIFIED:</span>
+                    <span className="text-[#00FF41] text-xs">{metadata.lastModified}</span>
+                  </div>
+                </div>
+                <div className="border border-[#00aa2a] p-3 space-y-2 text-sm">
+                  <p className="text-[#00aa2a] text-xs mb-1">AUDIO_INFO:</p>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">DURATION:</span>
+                    <span className="text-[#00FF41]">{metadata.duration}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">SAMPLE_RATE:</span>
+                    <span className="text-[#00FF41]">{metadata.sampleRate.toLocaleString()} Hz</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">CHANNELS:</span>
+                    <span className="text-[#00FF41]">{metadata.channelLayout}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">BIT_DEPTH:</span>
+                    <span className="text-[#00FF41]">{metadata.bitDepth}-bit</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">EST_BITRATE:</span>
+                    <span className="text-[#00FF41]">{metadata.estimatedBitrate}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#00aa2a]">TOTAL_SAMPLES:</span>
+                    <span className="text-[#00FF41]">{metadata.totalSamples.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-3">
             <h3 className="text-sm text-[#00FF41]">{"// WAVEFORM_VISUALIZATION"}</h3>
             <div className="border-t border-[#00FF41] pt-3"></div>

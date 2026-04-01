@@ -34,3 +34,7 @@ export type { AudioDecodeOptions, AudioDecodeResult } from './audio-decoder';
 // ─── Audio Analysis ───────────────────────────────────────────────────────────
 export { analyzeAudio, drawAudioWaveform, drawSpectrogram } from './audio-analyze';
 export type { AudioAnalysisResult } from './audio-analyze';
+
+// ─── Metadata Extraction ──────────────────────────────────────────────────────
+export { extractImageMetadata, extractExifData, extractAudioMetadata } from './metadata';
+export type { ImageMetadata, AudioMetadata } from './metadata';
