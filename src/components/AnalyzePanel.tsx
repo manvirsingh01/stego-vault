@@ -69,12 +69,32 @@ export function AnalyzePanel() {
     
     const barWidth = width / 256;
     
-    // Draw green channel only for terminal aesthetic
-    ctx.fillStyle = '#00FF41';
+    // Draw all three RGB channels with their original colors
+    // Use transparency so overlapping areas are visible
+    ctx.globalAlpha = 0.6;
+    
+    // Draw Red channel
+    ctx.fillStyle = '#FF0000';
+    histogram.red.forEach((val, i) => {
+      const barHeight = (val / maxVal) * (height - 4);
+      ctx.fillRect(i * barWidth, height - barHeight - 2, barWidth - 0.5, barHeight);
+    });
+    
+    // Draw Green channel
+    ctx.fillStyle = '#00FF00';
     histogram.green.forEach((val, i) => {
       const barHeight = (val / maxVal) * (height - 4);
       ctx.fillRect(i * barWidth, height - barHeight - 2, barWidth - 0.5, barHeight);
     });
+    
+    // Draw Blue channel
+    ctx.fillStyle = '#0000FF';
+    histogram.blue.forEach((val, i) => {
+      const barHeight = (val / maxVal) * (height - 4);
+      ctx.fillRect(i * barWidth, height - barHeight - 2, barWidth - 0.5, barHeight);
+    });
+    
+    ctx.globalAlpha = 1.0;
   }, [histogram]);
 
   const handleClear = useCallback(() => {
