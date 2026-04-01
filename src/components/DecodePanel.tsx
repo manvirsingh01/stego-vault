@@ -27,7 +27,6 @@ export function DecodePanel() {
     ctx.putImageData(imageData, 0, 0);
     setStegoPreview(canvas.toDataURL());
     
-    // Try to detect hidden data
     const detection = detectHiddenData(imageData, bitDepth);
     setConfidence(detection.confidence);
   }, [bitDepth]);
@@ -48,7 +47,7 @@ export function DecodePanel() {
       
       setDecodedMessage(result.message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Decoding failed');
+      setError(err instanceof Error ? err.message : 'DECODING_FAILED');
     } finally {
       setIsDecoding(false);
     }
@@ -62,49 +61,56 @@ export function DecodePanel() {
     }
   }, [decodedMessage]);
 
+  const handleClear = useCallback(() => {
+    setStegoImage(null);
+    setStegoPreview(null);
+    setPassword('');
+    setDecodedMessage(null);
+    setError(null);
+    setConfidence(null);
+  }, []);
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Upload Stego Image</h3>
-      
-      <ImageDropzone 
-        onImageLoad={handleImageLoad}
-        preview={stegoPreview}
-        label="Drop stego image here to decode"
-      />
+    <div className="max-w-3xl space-y-6">
+      <div>
+        <h3 className="text-sm text-[#00FF41] mb-2">INPUT_IMAGE:</h3>
+        <ImageDropzone 
+          onImageLoad={handleImageLoad}
+          preview={stegoPreview}
+          label="DROP_STEGO_IMAGE_TO_DECODE"
+        />
+      </div>
       
       {confidence !== null && stegoImage && (
-        <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <span className="text-gray-600 dark:text-gray-400">Detection confidence:</span>
-          <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="border border-[#00aa2a] p-3 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-[#00aa2a]">DETECTION_CONFIDENCE:</span>
+            <span className="text-[#00FF41]">{(confidence * 100).toFixed(0)}%</span>
+          </div>
+          <div className="h-2 bg-[#0a0a0a] border border-[#00aa2a]">
             <div 
-              className={`h-full transition-all duration-300 ${
-                confidence > 0.7 ? 'bg-green-500' : 
-                confidence > 0.4 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
+              className="h-full bg-[#00FF41] transition-all duration-300"
               style={{ width: `${confidence * 100}%` }}
             />
           </div>
-          <span className="font-medium text-gray-800 dark:text-gray-200">
-            {(confidence * 100).toFixed(0)}%
-          </span>
         </div>
       )}
 
       {/* Bit Depth Selector */}
       <div className="space-y-2">
-        <label className="text-sm text-gray-600 dark:text-gray-400">LSB Bit Depth</label>
+        <label className="text-xs text-[#00aa2a]">LSB_BIT_DEPTH:</label>
         <div className="flex gap-2">
           {([1, 2, 4] as BitDepth[]).map((depth) => (
             <button
               key={depth}
               onClick={() => setBitDepth(depth)}
-              className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
+              className={`flex-1 py-2 px-4 border text-sm transition-colors ${
                 bitDepth === depth
-                  ? 'bg-blue-500 border-blue-500 text-white'
-                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ? 'bg-[#00FF41] border-[#00FF41] text-[#0a0a0a]'
+                  : 'border-[#00aa2a] text-[#00aa2a] hover:border-[#00FF41] hover:text-[#00FF41]'
               }`}
             >
-              {depth}-bit
+              {depth}-BIT
             </button>
           ))}
         </div>
@@ -112,66 +118,57 @@ export function DecodePanel() {
 
       {/* Password Field */}
       <div className="space-y-2">
-        <label className="text-sm text-gray-600 dark:text-gray-400">
-          Decryption Password (optional)
-        </label>
+        <label className="text-xs text-[#00aa2a]">DECRYPTION_PASSWORD:</label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter password if message is encrypted"
-          className="w-full p-3 border rounded-lg
-            bg-white dark:bg-gray-800 
-            border-gray-300 dark:border-gray-600
-            text-gray-800 dark:text-gray-200
-            placeholder-gray-400 dark:placeholder-gray-500
-            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="ENTER_PASSWORD_IF_ENCRYPTED..."
+          className="w-full p-2 border border-[#00FF41] bg-[#0a0a0a] text-[#00FF41] 
+            placeholder-[#00aa2a] font-mono text-sm focus:outline-none"
         />
       </div>
 
-      <button
-        onClick={handleDecode}
-        disabled={!stegoImage || isDecoding}
-        className="w-full py-3 px-6 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 
-          text-white font-semibold rounded-lg transition-colors
-          disabled:cursor-not-allowed"
-      >
-        {isDecoding ? 'Decoding...' : 'Decode Message'}
-      </button>
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        <button
+          onClick={handleDecode}
+          disabled={!stegoImage || isDecoding}
+          className="flex-1 py-2 px-4 border border-[#00FF41] text-[#00FF41] text-sm
+            hover:bg-[#00FF41] hover:text-[#0a0a0a] transition-colors
+            disabled:border-[#00aa2a] disabled:text-[#00aa2a] disabled:cursor-not-allowed
+            disabled:hover:bg-transparent disabled:hover:text-[#00aa2a]"
+        >
+          {isDecoding ? 'DECODING...' : '<< DECODE'}
+        </button>
+        <button
+          onClick={handleClear}
+          className="py-2 px-4 border border-[#FF2200] text-[#FF2200] text-sm
+            hover:bg-[#FF2200] hover:text-[#0a0a0a] transition-colors"
+        >
+          CLEAR
+        </button>
+      </div>
 
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400">
-          {error}
+        <div className="border border-[#FF2200] p-3 text-[#FF2200] text-sm">
+          ERROR: {error}
         </div>
       )}
 
       {decodedMessage !== null && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-gray-800 dark:text-gray-200">Decoded Message</h4>
+            <h4 className="text-sm text-[#00FF41]">OUTPUT_DATA:</h4>
             <button
               onClick={handleCopy}
-              className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1"
+              className="text-xs text-[#00aa2a] hover:text-[#00FF41] transition-colors"
             >
-              {copied ? (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Copy
-                </>
-              )}
+              {copied ? '[COPIED]' : '[COPY]'}
             </button>
           </div>
-          <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <pre className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 font-mono text-sm">
+          <div className="border border-[#00FF41] p-3 bg-[#0a0a0a] min-h-[100px]">
+            <pre className="whitespace-pre-wrap text-[#00FF41] font-mono text-sm normal-case">
               {decodedMessage}
             </pre>
           </div>

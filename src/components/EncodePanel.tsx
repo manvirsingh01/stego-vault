@@ -75,43 +75,49 @@ export function EncodePanel() {
       
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Encoding failed');
+      setError(err instanceof Error ? err.message : 'ENCODING_FAILED');
     } finally {
       setIsEncoding(false);
     }
   }, [coverImage, message, bitDepth, useEncryption, password, coverFile]);
 
+  const handleClear = useCallback(() => {
+    setCoverImage(null);
+    setCoverPreview(null);
+    setCoverFile(null);
+    setMessage('');
+    setPassword('');
+    setError(null);
+    setSuccess(false);
+  }, []);
+
   return (
-    <div className="grid md:grid-cols-2 gap-8">
+    <div className="grid md:grid-cols-2 gap-6">
       {/* Left Column - Cover Image */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Cover Image</h3>
+        <h3 className="text-sm text-[#00FF41]">COVER_IMAGE:</h3>
         
         <ImageDropzone 
           onImageLoad={handleImageLoad}
           preview={coverPreview}
-          label="Drop cover image here"
+          label="DROP_COVER_IMAGE_HERE"
         />
         
         {coverImage && (
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Resolution</p>
-              <p className="font-semibold text-gray-800 dark:text-gray-200">
-                {coverImage.width} × {coverImage.height}
-              </p>
+          <div className="border border-[#00aa2a] p-3 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-[#00aa2a]">RESOLUTION:</span>
+              <span className="text-[#00FF41]">{coverImage.width} × {coverImage.height}</span>
             </div>
-            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400">File Size</p>
-              <p className="font-semibold text-gray-800 dark:text-gray-200">
+            <div className="flex justify-between">
+              <span className="text-[#00aa2a]">FILE_SIZE:</span>
+              <span className="text-[#00FF41]">
                 {coverFile ? `${(coverFile.size / 1024).toFixed(1)} KB` : '-'}
-              </p>
+              </span>
             </div>
-            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Capacity</p>
-              <p className="font-semibold text-gray-800 dark:text-gray-200">
-                {capacity.toLocaleString()} bytes
-              </p>
+            <div className="flex justify-between">
+              <span className="text-[#00aa2a]">CAPACITY:</span>
+              <span className="text-[#00FF41]">{capacity.toLocaleString()} BYTES</span>
             </div>
           </div>
         )}
@@ -119,34 +125,29 @@ export function EncodePanel() {
 
       {/* Right Column - Message */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Secret Message</h3>
+        <h3 className="text-sm text-[#00FF41]">INPUT_DATA:</h3>
         
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Enter your secret message..."
-          className="w-full h-40 p-4 border rounded-lg resize-none
-            bg-white dark:bg-gray-800 
-            border-gray-300 dark:border-gray-600
-            text-gray-800 dark:text-gray-200
-            placeholder-gray-400 dark:placeholder-gray-500
-            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="ENTER_SECRET_MESSAGE..."
+          className="w-full h-40 p-3 border border-[#00FF41] bg-[#0a0a0a] text-[#00FF41] 
+            placeholder-[#00aa2a] resize-none font-mono text-sm focus:outline-none"
         />
         
         <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">
-              {messageBytes.toLocaleString()} / {capacity.toLocaleString()} bytes
+          <div className="flex justify-between text-xs">
+            <span className="text-[#00aa2a]">
+              BYTES_USED: {messageBytes.toLocaleString()} / {capacity.toLocaleString()}
             </span>
-            <span className={`font-medium ${capacityPercent > 100 ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}>
+            <span className={capacityPercent > 100 ? 'text-[#FF2200]' : 'text-[#00FF41]'}>
               {capacityPercent.toFixed(1)}%
             </span>
           </div>
-          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-2 bg-[#0a0a0a] border border-[#00aa2a]">
             <div 
               className={`h-full transition-all duration-300 ${
-                capacityPercent > 100 ? 'bg-red-500' : 
-                capacityPercent > 75 ? 'bg-yellow-500' : 'bg-blue-500'
+                capacityPercent > 100 ? 'bg-[#FF2200]' : 'bg-[#00FF41]'
               }`}
               style={{ width: `${Math.min(100, capacityPercent)}%` }}
             />
@@ -154,77 +155,84 @@ export function EncodePanel() {
         </div>
 
         {/* Encryption Toggle */}
-        <div className="space-y-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <label className="flex items-center gap-3 cursor-pointer">
+        <div className="border border-[#00aa2a] p-3 space-y-3">
+          <label className="flex items-center gap-3 cursor-pointer text-sm">
             <input
               type="checkbox"
               checked={useEncryption}
               onChange={(e) => setUseEncryption(e.target.checked)}
-              className="w-5 h-5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+              className="w-4 h-4 accent-[#00FF41]"
             />
-            <span className="text-gray-700 dark:text-gray-300">Enable AES-256 Encryption</span>
+            <span className="text-[#00FF41]">ENABLE_AES256_ENCRYPTION</span>
           </label>
           
           {useEncryption && (
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter encryption password"
-              className="w-full p-3 border rounded-lg
-                bg-white dark:bg-gray-800 
-                border-gray-300 dark:border-gray-600
-                text-gray-800 dark:text-gray-200
-                placeholder-gray-400 dark:placeholder-gray-500
-                focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            <div>
+              <label className="text-xs text-[#00aa2a] block mb-1">PASSWORD:</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="ENTER_ENCRYPTION_KEY..."
+                className="w-full p-2 border border-[#00FF41] bg-[#0a0a0a] text-[#00FF41] 
+                  placeholder-[#00aa2a] font-mono text-sm focus:outline-none"
+              />
+            </div>
           )}
         </div>
 
         {/* Bit Depth Selector */}
         <div className="space-y-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">LSB Bit Depth</label>
+          <label className="text-xs text-[#00aa2a]">LSB_BIT_DEPTH:</label>
           <div className="flex gap-2">
             {([1, 2, 4] as BitDepth[]).map((depth) => (
               <button
                 key={depth}
                 onClick={() => setBitDepth(depth)}
-                className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
+                className={`flex-1 py-2 px-4 border text-sm transition-colors ${
                   bitDepth === depth
-                    ? 'bg-blue-500 border-blue-500 text-white'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-[#00FF41] border-[#00FF41] text-[#0a0a0a]'
+                    : 'border-[#00aa2a] text-[#00aa2a] hover:border-[#00FF41] hover:text-[#00FF41]'
                 }`}
               >
-                {depth}-bit
+                {depth}-BIT
               </button>
             ))}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Higher bit depth = more capacity but higher detectability
-          </p>
         </div>
 
         {error && (
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400">
-            {error}
+          <div className="border border-[#FF2200] p-3 text-[#FF2200] text-sm">
+            ERROR: {error}
           </div>
         )}
 
         {success && (
-          <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-600 dark:text-green-400">
-            ✓ Image encoded and downloaded successfully!
+          <div className="border border-[#00FF41] p-3 text-[#00FF41] text-sm">
+            SUCCESS: IMAGE_ENCODED_AND_DOWNLOADED
           </div>
         )}
 
-        <button
-          onClick={handleEncode}
-          disabled={!coverImage || !message || messageBytes > capacity || isEncoding}
-          className="w-full py-3 px-6 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 
-            text-white font-semibold rounded-lg transition-colors
-            disabled:cursor-not-allowed"
-        >
-          {isEncoding ? 'Encoding...' : 'Encode & Download'}
-        </button>
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleEncode}
+            disabled={!coverImage || !message || messageBytes > capacity || isEncoding}
+            className="flex-1 py-2 px-4 border border-[#00FF41] text-[#00FF41] text-sm
+              hover:bg-[#00FF41] hover:text-[#0a0a0a] transition-colors
+              disabled:border-[#00aa2a] disabled:text-[#00aa2a] disabled:cursor-not-allowed
+              disabled:hover:bg-transparent disabled:hover:text-[#00aa2a]"
+          >
+            {isEncoding ? 'ENCODING...' : 'ENCODE >>'}
+          </button>
+          <button
+            onClick={handleClear}
+            className="py-2 px-4 border border-[#FF2200] text-[#FF2200] text-sm
+              hover:bg-[#FF2200] hover:text-[#0a0a0a] transition-colors"
+          >
+            CLEAR
+          </button>
+        </div>
       </div>
     </div>
   );
